@@ -97,6 +97,24 @@ class AlwaysOnSnippetTest(unittest.TestCase):
         self.assertIn("stop adhd mode", text)
         self.assertIn("normal mode", text)
 
+    def test_gemini_rules_keep_canonical_conditions(self):
+        skill = (ROOT / "skills/i-have-adhd/SKILL.md").read_text(encoding="utf8")
+        command = (ROOT / "skills/i-have-adhd/agents/gemini.toml").read_text(
+            encoding="utf8"
+        )
+        for number in (3, 9):
+            with self.subTest(rule=number):
+                section = re.search(
+                    rf"^### {number}\. [^\n]+\n\n(.*?)(?=\n### |\Z)",
+                    skill,
+                    re.M | re.S,
+                )
+                self.assertIsNotNone(section)
+                body = section.group(1).split("\n\nBad:", 1)[0]
+                rule = re.search(rf"^{number}\. (.+)$", command, re.M)
+                self.assertIsNotNone(rule)
+                self.assertEqual(rule.group(1), " ".join(body.split()))
+
 
 if __name__ == "__main__":
     unittest.main()
